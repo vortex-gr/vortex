@@ -10,7 +10,7 @@
 
   <!-- DISCORD PRESENCE -->
   <a href="https://discord.com/users/1311948851925487636">
-    <img src="https://lanyard.cnrad.dev/api/1311948851925487636?theme=dark&bg=2F3136&borderRadius=20px&idleMessage=💡+Python+|+Node.js+|+C%23+|+HTML&animated=true&showDisplayName=true&hideDiscrim=false" alt="Discord Presence">
+    <img src="https://lanyard.cnrad.dev/api/1311948851925487636?theme=dark&bg=2F3136&borderRadius=20px&idleMessage=Python+|+Node.js+|+C%23+|+HTML&animated=true&showDisplayName=true&hideDiscrim=false" alt="Discord Presence">
   </a>
 
   <br><br>
