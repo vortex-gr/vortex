@@ -3,7 +3,7 @@
 </div>
 <p align="center">
   <a href="https://discord.com/users/1311948851925487636">
-    <img alt="Discord Presence" src="https://lanyard.cnrad.dev/api/1311948851925487636?borderRadius=20px&idleMessage=Python - Node.js - C# - Html&showDisplayName=true">
+    <img alt="Discord Presence" src="https://lanyard.cnrad.dev/api/1311948851925487636?borderRadius=20px&idleMessage=Python%20-%20Node.js%20-%20C#%20-%20Html&showDisplayName=true">
   </a>
 </p>
 <hr>
