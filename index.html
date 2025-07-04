@@ -1,0 +1,383 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vortex Profile</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(180deg, #0a0015, #1a0a2a);
+            color: #fff;
+            font-family: 'Montserrat', sans-serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            perspective: 1000px;
+        }
+        .container {
+            text-align: center;
+            z-index: 2;
+            position: relative;
+            animation: fadeIn 1.5s ease-out;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 0 30px rgba(255, 105, 180, 0.3);
+        }
+        .avatar {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            border: 5px solid #fff;
+            box-shadow: 0 0 30px rgba(255, 105, 180, 0.9), 0 0 60px rgba(255, 105, 180, 0.5);
+            margin-bottom: 30px;
+            transition: transform 0.5s ease, box-shadow 0.5s ease;
+        }
+        .avatar:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 0 50px rgba(255, 105, 180, 1), 0 0 80px rgba(255, 105, 180, 0.6);
+        }
+        h1 {
+            font-size: 3.5em;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-shadow: 0 0 20px rgba(255, 105, 180, 0.8), 0 0 40px rgba(255, 105, 180, 0.4);
+            margin: 0 0 10px;
+        }
+        p {
+            font-size: 1.6em;
+            font-weight: 300;
+            letter-spacing: 1.5px;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+        .social-icons {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+        }
+        .social-icons a {
+            display: inline-block;
+            color: #fff;
+            font-size: 50px;
+            transition: all 0.4s ease;
+            position: relative;
+        }
+        .social-icons a:hover {
+            transform: scale(1.4) rotate(15deg);
+            color: #ff69b4;
+            text-shadow: 0 0 20px rgba(255, 105, 180, 1), 0 0 40px rgba(255, 105, 180, 0.8);
+        }
+        .social-icons a .tooltip {
+            visibility: hidden;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 5px 10px;
+            position: absolute;
+            z-index: 3;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .social-icons a:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+        .card {
+            width: 400px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 20px auto 0;
+            box-shadow: 0 0 20px rgba(255, 105, 180, 0.5);
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+            text-decoration: none;
+            color: #fff;
+        }
+        .card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(255, 105, 180, 0.8);
+        }
+        .card img {
+            width: 60px;
+            height: 60px;
+            margin-right: 15px;
+            filter: brightness(0) invert(1);
+        }
+        .card-content {
+            display: flex;
+            width: 100%;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .card-content h3 {
+            margin: 0;
+            font-size: 1.4em;
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(255, 105, 180, 0.7);
+        }
+        .card-content p {
+            margin: 5px 0 0;
+            font-size: 1em;
+            font-weight: 300;
+            text-shadow: none;
+            opacity: 0.8;
+        }
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px) rotateX(10deg); }
+            to { opacity: 1; transform: translateY(0) rotateX(0); }
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;800&display=swap');
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div class="container">
+        <img src="https://cdn.discordapp.com/avatars/1311948851925487636/831093d6de2876ed7678044996c6fd60.webp" alt="Vortex Avatar" class="avatar">
+        <h1>Vortex</h1>
+        <p>My AKA Name Is "Vortex" - Founder 'GRSTORE'</p>
+        <div class="social-icons">
+            <a href="https://twitter.com" target="_blank"><i class="fab fa-twitter"></i><span class="tooltip">Twitter</span></a>
+            <a href="https://instagram.com" target="_blank"><i class="fab fa-instagram"></i><span class="tooltip">Instagram</span></a>
+            <a href="https://facebook.com" target="_blank"><i class="fab fa-facebook-f"></i><span class="tooltip">Facebook</span></a>
+        </div>
+        <a href="https://discord.gg/NEcZS3UkrB" target="_blank" class="card">
+            <img src="https://media.discordapp.net/attachments/1361293542491684887/1390685534296211496/1b9a66103c377c74102b8fb9d7821d77-removebg-preview.png?ex=68692855&is=6867d6d5&hm=f91f786046644ca47269c40e4814ee08720907e54fa8b45aac4fa7c4a05198aa&=&format=webp&quality=lossless" alt="GRStore Discord">
+            <div class="card-content">
+                <h3>GRStore Discord</h3>
+                <p>My Cheap Store</p>
+            </div>
+        </a>
+    </div>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const texts = [
+            'Anh yêu em',
+            'Mãi bên em',
+            'Chỉ có em',
+            'Yêu mình em',
+            'Thương em nhiều',
+            'Luôn có em',
+            'Cần em thôi',
+            'Em là nhất',
+            'Nhớ em mãi',
+            'Bên em mãi'
+        ];
+        const drops = [];
+        const rainDrops = [];
+        let mouseX = canvas.width / 2;
+        let mouseY = canvas.height / 2;
+        let mouseVX = 0;
+        let mouseVY = 0;
+        let lastMouseX = mouseX;
+        let lastMouseY = mouseY;
+
+        // Track mouse movement and calculate velocity
+        document.addEventListener('mousemove', (e) => {
+            const now = performance.now();
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            mouseVX = mouseX - lastMouseX;
+            mouseVY = mouseY - lastMouseY;
+            lastMouseX = mouseX;
+            lastMouseY = mouseY;
+        });
+
+        // Falling text effect following mouse direction
+        class TextDrop {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * -canvas.height;
+                this.text = texts[Math.floor(Math.random() * texts.length)];
+                this.baseSpeedY = Math.random() * 1.5 + 0.8;
+                this.speedX = 0;
+                this.speedY = this.baseSpeedY;
+                this.size = Math.random() * 18 + 16;
+                this.opacity = Math.random() * 0.4 + 0.6;
+                this.lastUpdate = performance.now();
+            }
+            draw() {
+                ctx.font = `${this.size}px Montserrat`;
+                ctx.fillStyle = `rgba(255, 105, 180, ${this.opacity})`;
+                ctx.shadowColor = 'rgba(255, 105, 180, 1)';
+                ctx.shadowBlur = 20;
+                ctx.fillText(this.text, this.x, this.y);
+                ctx.shadowBlur = 0;
+            }
+            update() {
+                const now = performance.now();
+                const deltaTime = (now - this.lastUpdate) / 1000;
+                this.lastUpdate = now;
+
+                const mouseSpeed = Math.sqrt(mouseVX * mouseVX + mouseVY * mouseVY);
+                if (mouseSpeed > 1) {
+                    const influence = Math.min(mouseSpeed / 50, 1.5);
+                    this.speedX = mouseVX * influence * 0.04;
+                    this.speedY = this.baseSpeedY + mouseVY * influence * 0.02;
+                } else {
+                    this.speedX *= 0.95;
+                    this.speedY = this.baseSpeedY;
+                }
+                this.speedX *= 0.95;
+                this.speedY = Math.max(this.speedY * 0.95, this.baseSpeedY);
+                this.x += this.speedX * deltaTime * 60;
+                this.y += this.speedY * deltaTime * 60;
+                if (this.y > canvas.height + this.size || this.x < -100 || this.x > canvas.width + 100) {
+                    this.y = -this.size;
+                    this.x = Math.random() * canvas.width;
+                    this.speedX = 0;
+                    this.speedY = this.baseSpeedY;
+                    this.opacity = Math.random() * 0.4 + 0.6;
+                }
+                this.draw();
+            }
+        }
+
+        // Rain effect following mouse direction
+        class RainDrop {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * -canvas.height;
+                this.length = Math.random() * 30 + 15;
+                this.baseSpeedY = Math.random() * 3 + 1.5;
+                this.speedX = 0;
+                this.speedY = this.baseSpeedY;
+                this.lastUpdate = performance.now();
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x + this.speedX * 2, this.y + this.length);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+                ctx.shadowBlur = 8;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+            update() {
+                const now = performance.now();
+                const deltaTime = (now - this.lastUpdate) / 1000;
+                this.lastUpdate = now;
+
+                const mouseSpeed = Math.sqrt(mouseVX * mouseVX + mouseVY * mouseVY);
+                if (mouseSpeed > 1) {
+                    const influence = Math.min(mouseSpeed / 50, 1.2);
+                    this.speedX = mouseVX * influence * 0.03;
+                    this.speedY = this.baseSpeedY + mouseVY * influence * 0.015;
+                } else {
+                    this.speedX *= 0.9;
+                    this.speedY = this.baseSpeedY;
+                }
+                this.speedX *= 0.9;
+                this.speedY = Math.max(this.speedY * 0.9, this.baseSpeedY);
+                this.x += this.speedX * deltaTime * 60;
+                this.y += this.speedY * deltaTime * 60;
+                if (this.y > canvas.height + this.length) {
+                    this.y = -this.length;
+                    this.x = Math.random() * canvas.width;
+                    this.speedX = 0;
+                    this.speedY = this.baseSpeedY;
+                }
+                this.draw();
+            }
+        }
+
+        // Initialize fewer drops
+        for (let i = 0; i < 20; i++) { // Reduced from 60 to 20
+            drops.push(new TextDrop());
+            rainDrops.push(new RainDrop());
+        }
+
+        // Animation loop with delta time
+        let lastFrame = performance.now();
+        function animate() {
+            const now = performance.now();
+            const deltaTime = (now - lastFrame) / 1000;
+            lastFrame = now;
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            drops.forEach(drop => drop.update());
+            rainDrops.forEach(drop => drop.update());
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // Resize canvas on window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
